@@ -10,11 +10,11 @@ struct Data {
 #[derive(Debug, Deserialize)]
 struct Station {
     id: Option<String>,
-    lat: Option<f32>,
-    lng: Option<f32>,
+    lat: Option<f64>,
+    lng: Option<f64>,
     name: Option<String>,
     state: Option<String>,
-    timezonecorr: Option<i32>,
+    timezonecorr: Option<i64>,
 }
 
 fn main() {
@@ -32,8 +32,8 @@ fn get_json(url: &str) -> Result<(), Box<dyn std::error::Error>> {
     let conn = Connection::open("./data/data.sqlite")?;
     let insert_data = "
         INSERT OR IGNORE INTO 
-            stations(noaa_id, name, lat, long, state, tz_offset) 
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
+            stations(noaa_id, name, lat, long, state, tz_offset, get_for_dev) 
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)";
     let res = reqwest::blocking::get(url)?;
     if res.status() == 200 {
         let body = res.text()?;
@@ -55,12 +55,14 @@ fn get_json(url: &str) -> Result<(), Box<dyn std::error::Error>> {
                 station.timezonecorr.as_ref(),
             ) {
                 if state != "" {
-                    let _ = conn.execute(insert_data, (noaa_id, name, lat, long, state, tz_offset));
+                    let _ =
+                        conn.execute(insert_data, (noaa_id, name, lat, long, state, tz_offset, 0));
                     // dbg!(noaa_id);
                     // dbg!(state);
                 }
             }
         });
     };
+    let _ = conn.close();
     Ok(())
 }
