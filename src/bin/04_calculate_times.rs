@@ -1,12 +1,13 @@
+use minijinja::{context, Environment, Error, Value};
 use rusqlite::Connection;
 use rusqlite::Result;
 use serde::Serialize;
-// use std::fs;
-use minijinja::{context, Environment, Error, Value};
+use std::fs;
 // use sunrise::sunrise_sunset;
-use chrono::{FixedOffset, NaiveDate};
+use chrono::{DateTime, FixedOffset, NaiveDate};
 use minijinja::value::Object;
 use std::sync::Arc;
+use sunrise::sunrise_sunset;
 
 #[derive(Debug, Serialize)]
 struct Station {
@@ -28,20 +29,42 @@ struct Prediction {
     utc_min: u32,
     value: f64,
     tz_offset: i32,
+    lat: f64,
+    long: f64,
 }
 
 impl Prediction {
     pub fn output(&self) -> Value {
-        let utc_dt = NaiveDate::from_ymd_opt(self.utc_year, self.utc_month, self.utc_day)
+        let tz_offset = FixedOffset::east_opt(self.tz_offset * 3600).unwrap();
+
+        let utc_low_tide = NaiveDate::from_ymd_opt(self.utc_year, self.utc_month, self.utc_day)
             .unwrap()
             .and_hms_opt(self.utc_hour, self.utc_min, 0)
             .unwrap()
             .and_utc();
+        let local_low_tide = utc_low_tide.with_timezone(&tz_offset);
 
-        let tz_offset = FixedOffset::east_opt(self.tz_offset * 3600).unwrap();
-        let adjusted_dt = utc_dt.with_timezone(&tz_offset);
+        let sun_times = sunrise_sunset(
+            self.lat,
+            self.long,
+            self.utc_year,
+            self.utc_month,
+            self.utc_day,
+        );
+        let utc_sunrise = DateTime::from_timestamp(sun_times.0, 0).unwrap();
+        let utc_sunset = DateTime::from_timestamp(sun_times.1, 0).unwrap();
+        let delta_sunrise = utc_low_tide - utc_sunrise;
 
-        Value::from(format!("{}", adjusted_dt))
+        let local_sunrise = utc_sunrise.with_timezone(&tz_offset);
+        // let local_sunset = utc_sunset.unwrap().with_timezone(&tz_offset);
+
+        Value::from(format!(
+            "{} | {:>3}:{:0>2} | {}",
+            local_sunrise,
+            delta_sunrise.num_hours(),
+            (delta_sunrise.num_minutes() % 60).abs(),
+            local_low_tide
+        ))
     }
 }
 
@@ -95,6 +118,8 @@ fn find_low_tides(conn: &Connection, stations: &mut Vec<Station>) -> Result<()> 
                 utc_min: row.get(5)?,
                 value: row.get(6)?,
                 tz_offset: station.tz_offset,
+                lat: station.lat,
+                long: station.long,
             })
         })?;
 
@@ -182,7 +207,8 @@ fn output_results(stations: Vec<Station>) {
     match env.get_template("output_template") {
         Ok(template) => match template.render(context!(stations => stations)) {
             Ok(output) => {
-                println!("{}", output);
+                let _ = fs::write("./data/output.txt", output);
+                //println!("{}", output);
             }
             Err(e) => {
                 dbg!(e);
