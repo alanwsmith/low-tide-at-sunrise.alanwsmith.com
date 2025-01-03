@@ -1,6 +1,7 @@
 export class Controller {
   constructor() {
     this.activeStation = null;
+    this.activeData = null;
     this.stations = {};
     this.init().then(({stations}) => {
       this.stations = stations;
@@ -8,7 +9,7 @@ export class Controller {
     });  
   } 
 
-  getStation() {
+  async getStation() {
     let currentDistance = 1000000000;
     const latNumber = parseFloat(document.querySelector("#latNumber").value);
     const longNumber = parseFloat(document.querySelector("#longNumber").value);
@@ -24,6 +25,14 @@ export class Controller {
         currentDistance = checkDistance;
       }
     }
+
+    let response = await fetch(`/data/predictions/${this.activeStation.noaa_id}.json`);
+    if (!response.ok) {
+      throw new Error('There was a problem getting the data')
+    }
+    let data = await response.json();
+    console.log(data);
+
     let stationNameEl = document.querySelector(".stationName");
     stationNameEl.innerHTML = this.activeStation.name;
   }
