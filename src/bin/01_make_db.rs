@@ -24,6 +24,7 @@ fn main() -> Result<()> {
             hour INTEGER,
             min INTEGER,
             value DECIMAL(10,3),
+            type TEXT NOT NULL,
             UNIQUE(noaa_id, year, month, day, hour, min) ON CONFLICT REPLACE
         )";
     conn.execute(create_predictions_table, ())?;

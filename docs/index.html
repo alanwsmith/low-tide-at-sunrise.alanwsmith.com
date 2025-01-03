@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+<style>
+.latLongInputs {
+  display: grid;
+  grid-template-columns: 6ch 1fr;
+}
+</style>
+
+  </head>
+  <body>
+    <h1>Low Tide Sunrise Finder</h1>
+    <div>
+      <div class="latLongInputs">
+      <label for="latNumber">Lat</label>
+      <input id="latNumber" name="lat" type="number" step="0.000001" value="30.332184"/>
+      <label for="longNumber">Long</label>
+      <input id="longNumber" name="long" type="number" step="0.000001" value="-81.655647"/>
+      </div>
+      <div class="buttonWrapper">Loading...</div>
+    </div>
+  <script type="module">
+    import { Controller } from "./script.js"
+    let controller = new Controller()
+
+  </script>
+  </body>
+</html>
