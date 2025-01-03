@@ -24,7 +24,8 @@ export class Controller {
         currentDistance = checkDistance;
       }
     }
-    console.log(this.activeStation)
+    let stationNameEl = document.querySelector(".stationName");
+    stationNameEl.innerHTML = this.activeStation.name;
   }
 
   getDistanceFromLatLong(lat1,lon1,lat2,lon2) {

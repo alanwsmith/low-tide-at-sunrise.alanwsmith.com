@@ -54,7 +54,7 @@ fn get_station_data() -> Result<()> {
     let tx = conn.transaction()?;
     let bar = ProgressBar::new(station_ids.len().try_into().unwrap());
     station_ids.iter().for_each(|station_id| {
-        let url = format!("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=20260101&end_date=20261231&station={}&product=predictions&datum=STND&time_zone=gmt&units=english&format=json&interval=hilo",
+        let url = format!("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=20250101&end_date=20341231&station={}&product=predictions&datum=STND&time_zone=gmt&units=english&format=json&interval=hilo",
             &station_id
         );
         let _ = get_json(&url, &station_id, &tx);

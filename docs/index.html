@@ -12,17 +12,20 @@
   </head>
   <body>
     <h1>Low Tide Sunrise Finder</h1>
-    <div>
-      <div class="latLongInputs">
+    <div class="latLongInputs">
       <label for="latNumber">Lat</label>
       <input id="latNumber" name="lat" type="number" step="0.000001" value="30.332184"/>
       <label for="longNumber">Long</label>
       <input id="longNumber" name="long" type="number" step="0.000001" value="-81.655647"/>
-      </div>
-      <div class="buttonWrapper">
-        <button class="getStationButton">Loading...</button>
-      <div>
     </div>
+    <div class="buttonWrapper">
+      <button class="getStationButton">Loading...</button>
+    <div>
+    <div>
+      <h2 class="stationName"></h2>
+      <div class="stationData"></div>
+    </div>
+
   <script type="module">
     import { Controller } from "./script.js"
     let controller = new Controller()
