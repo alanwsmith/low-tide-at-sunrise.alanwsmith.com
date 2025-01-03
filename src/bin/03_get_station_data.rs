@@ -29,6 +29,8 @@ fn main() {
 fn get_station_data() -> Result<()> {
     let mut station_ids: Vec<String> = vec![];
     let conn = Connection::open("./data/data.sqlite")?;
+    // NOTE: Use without the WHERE get_for_dev to get the full list
+    // let mut get_data = conn.prepare("SELECT noaa_id FROM stations")?;
     let mut get_data = conn.prepare("SELECT noaa_id FROM stations WHERE get_for_dev = ?1 ")?;
     let response = get_data.query_map([1], |row| {
         Ok((row.get::<usize, String>(0), row.get::<usize, String>(1)))
