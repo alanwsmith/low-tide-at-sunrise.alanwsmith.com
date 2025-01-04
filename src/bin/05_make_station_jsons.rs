@@ -38,21 +38,23 @@ struct Tide {
     tide_local_month: u32,
     tide_local_day: u32,
     tide_local_hour: u32,
-    tide_local_min: u32,
+    tide_local_minute: u32,
     sunrise_local_year: i32,
     sunrise_local_month: u32,
     sunrise_local_day: u32,
     sunrise_local_hour: u32,
-    sunrise_local_min: u32,
+    sunrise_local_minute: u32,
     sunset_local_year: i32,
     sunset_local_month: u32,
     sunset_local_day: u32,
     sunset_local_hour: u32,
-    sunset_local_min: u32,
+    sunset_local_minute: u32,
     sunrise_delta_hour: i64,
-    sunrise_delta_min: i64,
+    sunrise_delta_minute: i64,
+    sunrise_delta_minutes_raw: i64,
     sunset_delta_hour: i64,
-    sunset_delta_min: i64,
+    sunset_delta_minute: i64,
+    sunset_delta_minutes_raw: i64,
 }
 
 impl Tide {
@@ -63,7 +65,7 @@ impl Tide {
         utc_month: u32,
         utc_day: u32,
         utc_hour: u32,
-        utc_min: u32,
+        utc_minute: u32,
         lat: f64,
         long: f64,
         tz_offset: i32,
@@ -72,7 +74,7 @@ impl Tide {
 
         let utc_low_tide = NaiveDate::from_ymd_opt(utc_year, utc_month, utc_day)
             .unwrap()
-            .and_hms_opt(utc_hour, utc_min, 0)
+            .and_hms_opt(utc_hour, utc_minute, 0)
             .unwrap()
             .and_utc();
         let local_low_tide = utc_low_tide.with_timezone(&tz);
@@ -80,6 +82,10 @@ impl Tide {
         let sun_times = sunrise_sunset(lat, long, utc_year, utc_month, utc_day);
         let utc_sunrise = DateTime::from_timestamp(sun_times.0, 0).unwrap();
         let utc_sunset = DateTime::from_timestamp(sun_times.1, 0).unwrap();
+
+        // remove seconds since only minutes are used in output
+        let utc_sunrise = utc_sunrise.with_second(0).unwrap();
+
         let local_sunrise = utc_sunrise.with_timezone(&tz);
         let local_sunset = utc_sunset.with_timezone(&tz);
         let delta_sunrise = utc_low_tide - utc_sunrise;
@@ -89,21 +95,24 @@ impl Tide {
         let tide_local_month = local_low_tide.month();
         let tide_local_day = local_low_tide.day();
         let tide_local_hour = local_low_tide.hour();
-        let tide_local_min = local_low_tide.minute();
+        let tide_local_minute = local_low_tide.minute();
         let sunrise_local_year = local_sunrise.year();
         let sunrise_local_month = local_sunrise.month();
         let sunrise_local_day = local_sunrise.day();
         let sunrise_local_hour = local_sunrise.hour();
-        let sunrise_local_min = local_sunrise.minute();
+        let sunrise_local_minute = local_sunrise.minute();
         let sunset_local_year = local_sunset.year();
         let sunset_local_month = local_sunset.month();
         let sunset_local_day = local_sunset.day();
         let sunset_local_hour = local_sunset.hour();
-        let sunset_local_min = local_sunset.minute();
+        let sunset_local_minute = local_sunset.minute();
         let sunrise_delta_hour = delta_sunrise.num_hours();
-        let sunrise_delta_min = (delta_sunrise.num_minutes() % 60).abs();
+        let sunrise_delta_minute = (delta_sunrise.num_minutes() % 60).abs();
+        let sunrise_delta_minutes_raw = delta_sunrise.num_minutes();
         let sunset_delta_hour = delta_sunset.num_hours();
-        let sunset_delta_min = (delta_sunset.num_minutes() % 60).abs();
+        let sunset_delta_minute = (delta_sunset.num_minutes() % 60).abs();
+        let sunset_delta_minutes_raw = delta_sunset.num_minutes();
+
         Tide {
             high_low,
             value,
@@ -111,21 +120,23 @@ impl Tide {
             tide_local_month,
             tide_local_day,
             tide_local_hour,
-            tide_local_min,
+            tide_local_minute,
             sunrise_local_year,
             sunrise_local_month,
             sunrise_local_day,
             sunrise_local_hour,
-            sunrise_local_min,
+            sunrise_local_minute,
             sunset_local_year,
             sunset_local_month,
             sunset_local_day,
             sunset_local_hour,
-            sunset_local_min,
+            sunset_local_minute,
             sunrise_delta_hour,
-            sunrise_delta_min,
+            sunrise_delta_minute,
             sunset_delta_hour,
-            sunset_delta_min,
+            sunset_delta_minute,
+            sunrise_delta_minutes_raw,
+            sunset_delta_minutes_raw,
         }
     }
 }
@@ -168,7 +179,7 @@ fn get_tides(conn: &Connection, stations: &mut Vec<Station>) -> Result<()> {
             station.tides.push(row_wrapped.unwrap());
         }
         if station.tides.len() > 0 {
-            let json = serde_json::to_string_pretty(&station).unwrap();
+            let json = serde_json::to_string(&station).unwrap();
             let path = PathBuf::from(format!("./docs/data/predictions/{}.json", station.noaa_id));
             fs::write(path, json).unwrap();
         }

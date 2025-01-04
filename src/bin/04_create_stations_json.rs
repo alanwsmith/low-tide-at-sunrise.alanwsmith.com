@@ -1,6 +1,7 @@
 use rusqlite::Connection;
 use rusqlite::Result;
 use serde::Serialize;
+use std::collections::BTreeSet;
 use std::fs;
 
 #[derive(Debug, Serialize)]
@@ -17,6 +18,11 @@ struct Station {
     state: String,
 }
 
+#[derive(Debug, Serialize)]
+struct PredictionId {
+    noaa_id: String,
+}
+
 fn main() -> Result<()> {
     let conn = Connection::open("./data/data.sqlite")?;
     let payload = get_stations(&conn)?;
@@ -27,6 +33,21 @@ fn main() -> Result<()> {
 
 fn get_stations(conn: &Connection) -> Result<Payload> {
     let mut payload = Payload { stations: vec![] };
+    let mut sql1 = conn.prepare("SELECT DISTINCT noaa_id FROM predictions")?;
+    let params = rusqlite::params![];
+
+    let rows_iter = sql1.query_map(params, |row| {
+        Ok(PredictionId {
+            noaa_id: row.get(0)?,
+        })
+    })?;
+
+    let mut noaa_ids = BTreeSet::new();
+
+    for row in rows_iter {
+        noaa_ids.insert(row.unwrap().noaa_id);
+    }
+
     let mut stmt = conn.prepare(
         "SELECT noaa_id, name, lat, long, state, tz_offset 
             FROM stations
@@ -44,9 +65,12 @@ fn get_stations(conn: &Connection) -> Result<Payload> {
         })
     })?;
     for station in rows_iter {
-        payload.stations.push(station.unwrap());
+        let item = station.unwrap();
+        if noaa_ids.contains(&item.noaa_id) {
+            payload.stations.push(item);
+        }
     }
     Ok(payload)
 }
 
-fn output_payload(payload: &Payload) {}
+// fn output_payload(payload: &Payload) {}

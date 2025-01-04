@@ -54,12 +54,11 @@ fn get_json(url: &str) -> Result<(), Box<dyn std::error::Error>> {
                 station.state.as_ref(),
                 station.timezonecorr.as_ref(),
             ) {
-                if state != "" {
-                    let _ =
-                        conn.execute(insert_data, (noaa_id, name, lat, long, state, tz_offset, 0));
-                    // dbg!(noaa_id);
-                    // dbg!(state);
-                }
+                // First version without states had 2,642 entries
+                // Including entries without states: 3,349
+                let _ = conn.execute(insert_data, (noaa_id, name, lat, long, state, tz_offset, 0));
+                // dbg!(noaa_id);
+                // dbg!(state);
             }
         });
     };

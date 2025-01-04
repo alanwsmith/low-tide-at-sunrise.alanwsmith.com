@@ -1,6 +1,6 @@
 export class Controller {
   constructor() {
-    this.activeStation = null;
+    this.activeStationId = "8720291"; // Default to Jacksonville, beach
     this.activeData = null;
     this.stations = {};
     this.init().then(({stations}) => {
@@ -9,46 +9,74 @@ export class Controller {
     });  
   } 
 
-  async getStation() {
-    let currentDistance = 1000000000;
-    const latNumber = parseFloat(document.querySelector("#latNumber").value);
-    const longNumber = parseFloat(document.querySelector("#longNumber").value);
-    for (let noaaId in this.stations) {
-      const checkDistance = this.getDistanceFromLatLong(
-        this.stations[noaaId].lat, 
-        this.stations[noaaId].long,
-        latNumber, 
-        longNumber, 
-      )
-      if (checkDistance < currentDistance) {
-        this.activeStation = this.stations[noaaId];
-        currentDistance = checkDistance;
-      }
+  getState() {
+    if (this.stations[this.activeStationId].state != "") {
+      return `, ${this.stations[this.activeStationId].state}`
+    } else {
+      return ""
     }
+  }
 
-    let response = await fetch(`/data/predictions/${this.activeStation.noaa_id}.json`);
+  async getStation() {
+    let response = await fetch(`/data/predictions/${this.activeStationId}.json`);
     if (!response.ok) {
       throw new Error('There was a problem getting the data')
     }
     let data = await response.json();
+    const maxMinutesEl = document.querySelector("#maxMinutesBefore");
+    const maxMinutes = parseInt(maxMinutesEl.value, 10);
     console.log(data);
-
-    let stationNameEl = document.querySelector(".stationName");
-    stationNameEl.innerHTML = this.activeStation.name;
+    let items = [];
+    data.tides.forEach((item) => {
+      if (item.high_low === "L") {
+        const totalMinutes = (Math.abs(item.sunrise_delta_hour) * 60) + item.sunrise_delta_minute;
+        if (totalMinutes < maxMinutes) {
+          items.push(item)
+        }
+      }
+    })
+    this.outputItems(items)
   }
 
-  getDistanceFromLatLong(lat1,lon1,lat2,lon2) {
+  outputItems(items) {
+    let outputStuff = [];
+    outputStuff.push(`<h2>${this.stations[this.activeStationId].name}${this.getState()}</h2>`)
+    outputStuff.push(`<div class="tideLine">`)
+    outputStuff.push(`<div>Date</div><div class="right">Sunrise</div><div class="right">Low Tide</div><div class="right">Difference</div>`);
+    outputStuff.push(`</div>`)
+    items.forEach((item) => {
+      outputStuff.push(`<div class="tideLine">`)
+      outputStuff.push(`<div>${item.tide_local_year}-${this.pad2(item.tide_local_month)}-${this.pad2(item.tide_local_day)}</div>`)
+      outputStuff.push(`<div class="right">${item.sunrise_local_hour}:${this.pad2(item.sunrise_local_minute)}</div>`)
+      outputStuff.push(`<div class="right">${item.tide_local_hour}:${this.pad2(item.tide_local_minute)}</div>`)
+      outputStuff.push(`<div class="right">${Math.abs(item.sunrise_delta_hour)}:${this.pad2(item.sunrise_delta_minute)}`)
+      if (item.sunrise_delta_minutes_raw >= 0 ) {
+        outputStuff.push(` [+]`)
+      } else {
+        outputStuff.push(` [-]`)
+      }
+      outputStuff.push(`</div>`)
+      outputStuff.push(`</div>`)
+    });
+    const dataEl = document.querySelector(".stationData");
+    dataEl.innerHTML = outputStuff.join("");
+  }
+
+  pad2(num) {
+    return num.toString().padStart(2, '0')
+  }
+
+  getDistanceFromLatLong(lat1, lon1, lat2, lon2) {
     // from: https://stackoverflow.com/a/27943/102401
     var R = 6371; // Radius of the earth in km
-    var dLat = this.deg2rad(lat2-lat1);  // deg2rad below
+    var dLat = this.deg2rad(lat2-lat1); 
     var dLon = this.deg2rad(lon2-lon1); 
     var a = 
       Math.sin(dLat/2) * Math.sin(dLat/2) +
       Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2)
-      ; 
+      Math.sin(dLon/2) * Math.sin(dLon/2); 
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    var d = R * c; // Distance in km
+    var d = R * c;
     return d;
   }
 
@@ -57,9 +85,25 @@ export class Controller {
   }
 
   prep() {
-    const getStationButton = document.querySelector(".getStationButton");
-    getStationButton.addEventListener("click", () => { this.getStation.call(this, event) } )
-    getStationButton.innerHTML = "Get Station Data"
+    var map = L.map('map').setView([38, -100], 3);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    for (let station in this.stations) {
+      const marker = L.marker(
+        [this.stations[station].lat, this.stations[station].long
+      ]).addTo(map);
+      marker.noaa_id = this.stations[station].noaa_id;
+      marker.addEventListener("click", (event) => this.switchStation.call(this, event))
+    }
+    this.getStation()
+  }
+
+  switchStation(event) {
+    const el = event.target;
+    this.activeStationId = el.noaa_id;
+    this.getStation();
   }
 
   async init() {

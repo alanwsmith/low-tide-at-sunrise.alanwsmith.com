@@ -1,9 +1,9 @@
 use indicatif::ProgressBar;
 use rusqlite::Connection;
 use rusqlite::Result;
-use rusqlite::Transaction;
+// use rusqlite::Transaction;
 use serde::Deserialize;
-use std::{thread, time};
+// use std::{thread, time};
 
 #[derive(Debug, Deserialize)]
 struct Data {
@@ -49,24 +49,38 @@ fn get_station_data() -> Result<()> {
             station_ids.push(item.unwrap().0.unwrap().clone());
         }
     }
-    let sleep_time = time::Duration::from_millis(300);
-    let mut conn = Connection::open("./data/data.sqlite")?;
-    let tx = conn.transaction()?;
-    let bar = ProgressBar::new(station_ids.len().try_into().unwrap());
+     //let sleep_time = time::Duration::from_millis(300);
+    let _ = conn.close();
+
+    let cnt = station_ids.len() * 10;
+    let bar = ProgressBar::new(cnt.try_into().unwrap());
+
+            // let url = format!("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}0101&end_date={}1231&station={}&product=predictions&datum=STND&time_zone=gmt&units=english&format=json&interval=hilo",
+            //     2025, 2025, 
+            //     "8720218",
+            // );
+            // let _ = get_json(&url, "8720218");
+
     station_ids.iter().for_each(|station_id| {
-        let url = format!("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=20250101&end_date=20341231&station={}&product=predictions&datum=STND&time_zone=gmt&units=english&format=json&interval=hilo",
-            &station_id
-        );
-        let _ = get_json(&url, &station_id, &tx);
-        thread::sleep(sleep_time);
-        bar.inc(1);
+        for year in 2025..2035 {
+            let url = format!("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}0101&end_date={}1231&station={}&product=predictions&datum=STND&time_zone=gmt&units=english&format=json&interval=hilo",
+                year, 
+                year,
+                &station_id, 
+            );
+            let _ = get_json(&url, &station_id);
+            // thread::sleep(sleep_time);
+            bar.inc(1);
+        }
     });
+
     bar.finish();
-    tx.commit()?;
     Ok(())
 }
 
-fn get_json(url: &str, noaa_id: &str, tx: &Transaction) -> Result<(), Box<dyn std::error::Error>> {
+fn get_json(url: &str, noaa_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let mut conn = Connection::open("./data/data.sqlite")?;
+    let tx = conn.transaction()?;
     // println!("Loading: {}", &noaa_id);
     let insert_data = "
         INSERT INTO
@@ -99,5 +113,7 @@ fn get_json(url: &str, noaa_id: &str, tx: &Transaction) -> Result<(), Box<dyn st
             };
         });
     };
+    tx.commit()?;
+    let _ = conn.close();
     Ok(())
 }
