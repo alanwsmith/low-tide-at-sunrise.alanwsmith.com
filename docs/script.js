@@ -1,6 +1,6 @@
 export class Controller {
   constructor() {
-    this.activeStationId = "8720291"; // Default to Jacksonville, beach
+    this.activeStationId = "8720291"; // Default to Jacksonville Beach
     this.activeData = null;
     this.stations = {};
     this.init().then(({stations}) => {
@@ -23,15 +23,19 @@ export class Controller {
       throw new Error('There was a problem getting the data')
     }
     let data = await response.json();
-    const maxMinutesEl = document.querySelector("#maxMinutesBefore");
-    const maxMinutes = parseInt(maxMinutesEl.value, 10);
-    console.log(data);
+    const maxMinutesBefore = parseInt(this.maxMinutesBeforeEl.value, 10);
+    const maxMinutesAfter = parseInt(this.maxMinutesAfterEl.value, 10);
+    const year = parseInt(this.yearEl.value, 10);
     let items = [];
     data.tides.forEach((item) => {
-      if (item.high_low === "L") {
-        const totalMinutes = (Math.abs(item.sunrise_delta_hour) * 60) + item.sunrise_delta_minute;
-        if (totalMinutes < maxMinutes) {
-          items.push(item)
+      if (item.sunrise_local_year == year) {
+        if (item.high_low === "L") {
+          if (
+            item.sunrise_delta_minutes_raw >= (maxMinutesBefore * -1) 
+              &&
+            item.sunrise_delta_minutes_raw <= maxMinutesAfter) {
+            items.push(item)
+          }
         }
       }
     })
@@ -85,6 +89,12 @@ export class Controller {
   }
 
   prep() {
+    this.maxMinutesBeforeEl = document.querySelector("#maxMinutesBefore");
+    this.maxMinutesBeforeEl.addEventListener("change", (event) => this.getStation.call(this, event))
+    this.maxMinutesAfterEl = document.querySelector("#maxMinutesAfter");
+    this.maxMinutesAfterEl.addEventListener("change", (event) => this.getStation.call(this, event))
+    this.yearEl = document.querySelector("#year");
+    this.yearEl.addEventListener("change", (event) => this.getStation.call(this, event))
     var map = L.map('map').setView([38, -100], 3);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,

@@ -27,21 +27,36 @@
   gap: 1rem;
 }
 
+.wrapper {
+  max-width: 1000px;
+  margin-inline: auto;
+}
 </style>
 
   </head>
   <body>
+    <main class="wrapper">
     <h1>U.S. Sunrise Low Tide Finder</h1>
 
     <div class="twoColumns">
-      <div id="map"></div>
+      <div>
+        <div id="map"></div>
+        <h3>Notes</h3>
+        <ul>
+          <li>Zoom in on the map and select a marker to load the data for the location</li>
+          <li>Adjust the &quot;Maximum Minutes Before&quot; and &quot;Maximum Minutes After&quot; setting to set the time window between sunrise and low tide</li>
+          <li>Change the &quot;Year&quot; to see data for different years</li>
+          <li>Tide prediction data from <a href="https://tidesandcurrents.noaa.gov">tidesandcurrents.noaa.gov</a>
+            <li>Sunrise predictions from the <a href="https://github.com/nathan-osman/rust-sunrise">Rust sunrise crate</a>
+        </ul>
+      </div>
       <div>
         <div>
           <div class="twoColumns">
             <label for="maxMinutesBefore">Maximum Minutes Before</label>
             <select id="maxMinutesBefore" name="maxMinutesBefore">
-              <option value="10" selected="selected">10</option>
-              <option value="20">20</option>
+              <option value="10">10</option>
+              <option value="20" selected="selected">20</option>
               <option value="30">30</option>
               <option value="40">40</option>
               <option value="50">50</option>
@@ -54,15 +69,15 @@
             <select id="maxMinutesAfter" name="maxMinutesAfter">
               <option value="10">10</option>
               <option value="20">20</option>
-              <option value="30" selected="selected">30</option>
-              <option value="40">40</option>
+              <option value="30">30</option>
+              <option value="40" selected="selected">40</option>
               <option value="50">50</option>
               <option value="60">60</option>
               <option value="70">70</option>
               <option value="80">80</option>
               <option value="90">90</option>
             </select>
-            <label for="year">For year</label>
+            <label for="year">Year</label>
             <select id="year" name="year">
               <option value="2025" selected>2025</option>
               <option value="2026">2026</option>
@@ -83,6 +98,11 @@
         </div>
       </div>
     </div>
+    </main>
+
+    <footer>
+      from <a href="https://www.alanwsmith.com/">alan w smith</a>
+    </footer>
 
     <script type="module">
       import { Controller } from "./script.js"
