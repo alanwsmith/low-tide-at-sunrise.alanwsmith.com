@@ -4,21 +4,69 @@
     <link rel="stylesheet" href="/leaflet-v1.9.4/leaflet.css" />
     <script src="/leaflet-v1.9.4/leaflet.js"></script>
 <style>
-#map { height: 380px; width: 580px;}
+* {
+  margin: 0;
+}
+
+#map { 
+  border-radius: 0.3rem;
+  height: 380px; 
+  width: 520px;
+}
+
+a {
+  text-decoration: none;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+
+.boxed {
+  border: 1px solid #ccc;
+  border-radius: 0.3rem;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.center {
+  text-align: center;
+}
+
+.data-table {
+  width: 98%;
+}
+
+footer {
+  margin-block: 2rem;
+  max-width: 1000px;
+  margin-inline: auto;
+  text-align: center;
+}
 
 .latLongInputs {
   display: grid;
   grid-template-columns: 6ch 1fr;
 }
 
-.tideLine {
-  font-family: monospace;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+.left {
+  text-align: left;
+}
+
+.padding-1 {
+  padding-block: 0.5rem;
 }
 
 .right {
   text-align: right;
+}
+
+.tideLine {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  font-weight: normal;
+  font-size: 0.8rem;
 }
 
 .twoColumns {
@@ -31,29 +79,31 @@
   max-width: 1000px;
   margin-inline: auto;
 }
+
 </style>
 
   </head>
   <body>
     <main class="wrapper">
-    <h1>U.S. Sunrise Low Tide Finder</h1>
+    <h1 class="boxed">U.S. Low Tide At Sunrise Finder</h1>
 
     <div class="twoColumns">
-      <div>
+      <div class="boxed">
         <div id="map"></div>
-        <h3>Notes</h3>
-        <ul>
-          <li>Zoom in on the map and select a marker to load the data for the location</li>
-          <li>Adjust the &quot;Maximum Minutes Before&quot; and &quot;Maximum Minutes After&quot; setting to set the time window between sunrise and low tide</li>
-          <li>Change the &quot;Year&quot; to see data for different years</li>
-          <li>Tide prediction data from <a href="https://tidesandcurrents.noaa.gov">tidesandcurrents.noaa.gov</a>
+          <h3 class="padding-1">Notes</h3>
+          <ul>
+            <li>Zoom in on the map and select a marker to load the data for the location</li>
+            <li>Adjust the &quot;Max Minutes Before&quot; and &quot;Max Minutes After&quot; setting to set the time window between sunrise and low tide</li>
+            <li>Change the &quot;Year&quot; to see data for different years</li>
+            <li>All times are local and adjust for daylight saving time</li>
+            <li>Tide prediction data from <a href="https://tidesandcurrents.noaa.gov">tidesandcurrents.noaa.gov</a>
             <li>Sunrise predictions from the <a href="https://github.com/nathan-osman/rust-sunrise">Rust sunrise crate</a>
-        </ul>
+          </ul>
       </div>
       <div>
         <div>
-          <div class="twoColumns">
-            <label for="maxMinutesBefore">Maximum Minutes Before</label>
+          <div class="twoColumns boxed">
+            <label for="maxMinutesBefore">Max Minutes Before</label>
             <select id="maxMinutesBefore" name="maxMinutesBefore">
               <option value="10">10</option>
               <option value="20" selected="selected">20</option>
@@ -64,8 +114,11 @@
               <option value="70">70</option>
               <option value="80">80</option>
               <option value="90">90</option>
+              <option value="100">100</option>
+              <option value="110">110</option>
+              <option value="120">120</option>
             </select>
-            <label for="maxMinutesAfter">Maximum Minutes After</label>
+            <label for="maxMinutesAfter">Max Minutes After</label>
             <select id="maxMinutesAfter" name="maxMinutesAfter">
               <option value="10">10</option>
               <option value="20">20</option>
@@ -76,6 +129,9 @@
               <option value="70">70</option>
               <option value="80">80</option>
               <option value="90">90</option>
+              <option value="100">100</option>
+              <option value="110">110</option>
+              <option value="120">120</option>
             </select>
             <label for="year">Year</label>
             <select id="year" name="year">
@@ -92,7 +148,7 @@
             </select>
           </div>
         </div>
-        <div>
+        <div class="boxed">
           <h2 class="stationName"></h2>
           <div class="stationData"></div>
         </div>
@@ -101,6 +157,8 @@
     </main>
 
     <footer>
+      <a href="https://github.com/alanwsmith/low-tide-at-sunrise.alanwsmith.com">source code</a> 
+      <br />
       from <a href="https://www.alanwsmith.com/">alan w smith</a>
     </footer>
 

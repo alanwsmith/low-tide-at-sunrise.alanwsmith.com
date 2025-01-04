@@ -11,7 +11,7 @@ fn main() -> Result<()> {
             lat INTEGER,
             long INTEGER,
             state TEXT,
-            tz_offset INTEGER,
+            tz_name TEXT,
             get_for_dev INTEGER
         )";
     conn.execute(create_stations_table, ())?;

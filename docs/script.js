@@ -27,15 +27,13 @@ export class Controller {
     const maxMinutesAfter = parseInt(this.maxMinutesAfterEl.value, 10);
     const year = parseInt(this.yearEl.value, 10);
     let items = [];
-    data.tides.forEach((item) => {
-      if (item.sunrise_local_year == year) {
-        if (item.high_low === "L") {
-          if (
-            item.sunrise_delta_minutes_raw >= (maxMinutesBefore * -1) 
-              &&
-            item.sunrise_delta_minutes_raw <= maxMinutesAfter) {
-            items.push(item)
-          }
+    data.low_tides.forEach((item) => {
+      if (item.sunrise[0] == year) {
+        if (
+          item.sunrise[7] >= (maxMinutesBefore * -1) 
+            &&
+          item.sunrise[7] <= maxMinutesAfter) {
+          items.push(item)
         }
       }
     })
@@ -44,23 +42,24 @@ export class Controller {
 
   outputItems(items) {
     let outputStuff = [];
-    outputStuff.push(`<h2>${this.stations[this.activeStationId].name}${this.getState()}</h2>`)
-    outputStuff.push(`<div class="tideLine">`)
-    outputStuff.push(`<div>Date</div><div class="right">Sunrise</div><div class="right">Low Tide</div><div class="right">Difference</div>`);
-    outputStuff.push(`</div>`)
+    outputStuff.push(`<h2>${this.yearEl.value} - ${this.stations[this.activeStationId].name}${this.getState()}</h2>`)
+    outputStuff.push(`<table class="data-table"><thead>`)
+    outputStuff.push(`<tr class="tideLine"><th class="left">Date</th><th>Sunrise</th><th>Low Tide</th><th>Diff</th></tr>`);
+    outputStuff.push(`</thead><tbody>`)
     items.forEach((item) => {
-      outputStuff.push(`<div class="tideLine">`)
-      outputStuff.push(`<div>${item.tide_local_year}-${this.pad2(item.tide_local_month)}-${this.pad2(item.tide_local_day)}</div>`)
-      outputStuff.push(`<div class="right">${item.sunrise_local_hour}:${this.pad2(item.sunrise_local_minute)}</div>`)
-      outputStuff.push(`<div class="right">${item.tide_local_hour}:${this.pad2(item.tide_local_minute)}</div>`)
-      outputStuff.push(`<div class="right">${Math.abs(item.sunrise_delta_hour)}:${this.pad2(item.sunrise_delta_minute)}`)
-      if (item.sunrise_delta_minutes_raw >= 0 ) {
+      outputStuff.push(`<tr class="tideLine">`)
+//      outputStuff.push(`<td>${item.tide_local_year}-${this.pad2(item.tide_local_month)}-${this.pad2(item.tide_local_day)} (${item.tide_local_day_string})</td>`)
+      outputStuff.push(`<td>${item.tide[5]}</td>`)
+      outputStuff.push(`<td class="center">${item.sunrise[3]}:${this.pad2(item.sunrise[4])}</td>`)
+      outputStuff.push(`<td class="center">${item.tide[3]}:${this.pad2(item.tide[4])}</td>`)
+      outputStuff.push(`<td class="center">${Math.abs(item.sunrise[5])}:${this.pad2(item.sunrise[6])}`)
+      if (item.sunrise[7] >= 0 ) {
         outputStuff.push(` [+]`)
       } else {
         outputStuff.push(` [-]`)
       }
-      outputStuff.push(`</div>`)
-      outputStuff.push(`</div>`)
+      outputStuff.push(`</td>`)
+      outputStuff.push(`</tr>`)
     });
     const dataEl = document.querySelector(".stationData");
     dataEl.innerHTML = outputStuff.join("");
